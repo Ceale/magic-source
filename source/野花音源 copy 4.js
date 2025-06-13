@@ -7,92 +7,31 @@
  * @returns 一个关键字数组
 */
 const R = [
-	'3934685EJsypn',
-	'4155220shjmqd',
-	'code',
-	'hash',
-	'copyrightI',
-	'GET',
-	'hex',
-	'gSyEM',
-	'4009336twNHZx',
-	'QTdcX',
-	'vMIuN',
-	'acGOz',
-	'iamzW',
-	'kw|128k&wy',
-	'/url/',
-	'nNhDn',
-	'bufToStrin',
-	'119924Zhuara',
-	'lx-music/',
-	'stringify',
-	'wer.tempmu',
-	'data',
-	'QVjzE',
-	'/urlinfo/',
-	'musicUrl',
-	'1510707iVmAso',
-	'md5',
-	'CxlIL',
-	'match',
-	'request',
-	'959116lEWWZC',
-	'songmid',
-	'sources',
-	'http://flo',
-	'buffer',
-	'14NoiTNH',
-	'split',
-	'5159PfWaop',
-	'inited',
-	'DFjbN',
-	'|128k&mg|1',
-	'sics.tk/v1',
-	'10878XneaKF',
-	'tag',
-	'from',
-	'KEWEM',
-	'3MhKFyJ',
-	'wrDDF',
-	'QXcEI',
-	'uITgx',
-	'28k&tx|128',
-	'ILkJK',
-	'FhkNH',
-	'crypto',
-	'服务器异常',
-	'failed',
-	'FpTmP',
-	'156KGDOun',
-	'msg',
-	'fialed',
-	'body',
-	'k&kg|128k',
-	'LCTQX',
-	'shift',
-	'PkJlH',
-	'xTmgg',
-	'music',
-	'rawScript',
-	'9WQyvje',
-	'version',
-	'updateAler',
-	'trim',
-	'lecSG'
+  '14NoiTNH',     'split',      '5159PfWaop',    'inited',
+  'DFjbN',        '|128k&mg|1', 'sics.tk/v1',    '10878XneaKF',
+  'tag',          'from',       'KEWEM',         '3MhKFyJ',
+  'wrDDF',        'QXcEI',      'uITgx',         '28k&tx|128',
+  'ILkJK',        'FhkNH',      'crypto',        '服务器异常',
+  'failed',       'FpTmP',      '156KGDOun',     'msg',
+  'fialed',       'body',       'k&kg|128k',     'LCTQX',
+  'shift',        'PkJlH',      'xTmgg',         'music',
+  'rawScript',    '9WQyvje',    'version',       'updateAler',
+  'trim',         'lecSG',      '3934685EJsypn', '4155220shjmqd',
+  'code',         'hash',       'copyrightI',    'GET',
+  'hex',          'gSyEM',      '4009336twNHZx', 'QTdcX',
+  'vMIuN',        'acGOz',      'iamzW',         'kw|128k&wy',
+  '/url/',        'nNhDn',      'bufToStrin',    '119924Zhuara',
+  'lx-music/',    'stringify',  'wer.tempmu',    'data',
+  'QVjzE',        '/urlinfo/',  'musicUrl',      '1510707iVmAso',
+  'md5',          'CxlIL',      'match',         'request',
+  '959116lEWWZC', 'songmid',    'sources',       'http://flo',
+  'buffer'
 ]
+
 function O() {
 	return R
 }
-// function Z(Y, L) {
-// 	const K = O()
-// 	Z = function (U, H) {
-// 		U = U - 345
-// 		let S = K[U]
-// 		return S
-// 	}
-// 	return Z(Y, L)
-// }
+
 /**
  * @returns 从关键字数组取出要用的关键字
  */
@@ -100,59 +39,25 @@ function Z(Y, L) {
 	return R[Y - 345]
 }
 
-(function (Y, L) {
-	const K = Y()
-	while (true) {
-		try {
-			const U = parseInt(Z('0x190')) / 1 * (parseInt(Z(345)) / 2) + -parseInt(Z('0x164')) / 3 * (parseInt(Z('0x19d')) / 4) + parseInt(Z(383)) / 5 + -parseInt(Z(352)) / 6 * (parseInt(Z('0x15b')) / 7) + -parseInt(Z(391)) / 8 * (parseInt(Z(378)) / 9) + -parseInt(Z('0x180')) / 10 + -parseInt(Z(408)) / 11 * (-parseInt(Z(367)) / 12)
-			if (U === L) {
-				break
-			} else {
-				K.push(K.shift())
-			}
-		} catch (H) {
-			K.push(K.shift())
-		}
-	}
-})(O, 919137)
-
-// (function (Y, L) {
-// 	const K = O()
-// 	while (true) {
-// 		try {
-// 			const U = parseInt(Z('0x190')) / 1 * (parseInt(Z(345)) / 2) + -parseInt(Z('0x164')) / 3 * (parseInt(Z('0x19d')) / 4) + parseInt(Z(383)) / 5 + -parseInt(Z(352)) / 6 * (parseInt(Z('0x15b')) / 7) + -parseInt(Z(391)) / 8 * (parseInt(Z(378)) / 9) + -parseInt(Z('0x180')) / 10 + -parseInt(Z(408)) / 11 * (-parseInt(Z(367)) / 12)
-// 			if (U === L) {
-// 				break
-// 			} else {
-// 				K.push(K.shift())
-// 			}
-// 		} catch (H) {
-// 			K.push(K.shift())
-// 		}
-// 	}
-// })(O, 919137)
-
 const { EVENT_NAMES: e, request: t, on: r, send: o, env: s, version: d, currentScriptInfo: i, utils: u } = globalThis.lx
 const { EVENT_NAMES, request, on, send, env, version, currentScriptInfo, utils } = globalThis.lx
+
 const getId = (Y, L) => {
-	const K = {
-		'wrDDF': function (U, H) {
-			return U(H)
-		}, 'uITgx': Z(365)
-	}
 	switch (Y) {
 		case 'tx':
 		case 'wy':
 		case 'kw':
-			return L[Z('0x19e')]
+			return L["songmid"]
 		case 'kg':
-			return L[Z(386)]
+			return L['hash']
 		case 'mg':
-			return L[Z('0x183') + 'd']
+			return L['copyrightId']
 	}
-	throw K[Z('0x165')](Error, K[Z(359)])
+	throw Error("failed")
 }
+
 const headers = { 'User-Agent': Z(401) + s, 'ver': d, 'source-ver': i[Z('0x17b')] }
+
 r(e[Z('0x19c')], ({ source: Y, action: L, info: { musicInfo: K, type: U } }) => {
 	const H = {
 		'vMIuN': function (S, N, B) {
