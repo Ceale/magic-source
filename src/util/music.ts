@@ -1,5 +1,7 @@
 import fs from 'fs/promises'
 
+export const source = [ "tx", "wy", "kg", "kw", "mg", "local" ] as const
+
 export const getId = (source, musicInfo) => {
     switch (source) {
         case 'tx':
@@ -12,7 +14,7 @@ export const getId = (source, musicInfo) => {
         case 'mg':
             return musicInfo['copyrightId']
     }
-    throw Error("failed")
+    throw Error("Invalid music source: "+source)
 }
 
 // interface MusicData {

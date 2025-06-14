@@ -1,5 +1,4 @@
-const { EVENT_NAMES, request, on, send } = globalThis.lx
-
+const { EVENT_NAMES, request, on, send, currentScriptInfo: { rawScript } } = globalThis.lx
 
 on(EVENT_NAMES.request, (event_data) => {
     if (import.meta.env.ENABLE_DEV_TOOLS) {
@@ -7,18 +6,25 @@ on(EVENT_NAMES.request, (event_data) => {
     }
     return new Promise((resolve, reject) => {
         request(
-            import.meta.env.SERVER_URL,
+            import.meta.env.API_URL + "api/source",
             {
-            method: "post",
-            headers: { "Content-Type": "application/json" },
-            body: event_data
+                method: "post",
+                headers: { "Content-Type": "application/json" },
+                body: event_data,
+                timeout: 15000
             },
             (err, resp) => {
+                if (import.meta.env.ENABLE_DEV_TOOLS) {
+                    console.log(err, resp)
+                }
                 if (err) {
                     reject(err)
                 }
-                console.log(resp)
-                resolve(resp.body.url)
+                if (resp.body.url) {
+                    resolve(resp.body.url)
+                } else {
+                    reject(resp.body.errmsg ?? "获取失败")
+                }
             }
         )
     })
@@ -71,3 +77,19 @@ send(EVENT_NAMES.inited, {
 if (import.meta.env.ENABLE_DEV_TOOLS) {
     console.log(globalThis.lx)
 }
+
+request(
+    import.meta.env.API_URL + "api-source",
+    { method: "get" },
+    (err, resp) => {
+        if (resp.body && resp.body !== rawScript) {
+            send(
+                EVENT_NAMES.updateAlert,
+                {
+                    log: `点击下方「打开更新地址」按钮，复制打开的地址，\n使用在线导入音乐源功能，直接粘贴复制的地址，\n或手动输入：${import.meta.env.API_URL + "api-source"}\n即可完成更新。`,
+                    updateUrl: import.meta.env.API_URL + "api-source",
+                }
+            )
+        } 
+    }
+)
