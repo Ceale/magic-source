@@ -4,7 +4,7 @@ import fs from "fs/promises"
 
 export default {
     music: eventHandler(async (event) => {
-        const file = event.context.params?.file as string
+        const file = event.context.params?.file // as string
     
         const fileContent = await fs.readFile(path.join("file/music/", file))
     

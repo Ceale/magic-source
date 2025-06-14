@@ -1,12 +1,10 @@
 const { EVENT_NAMES, request, on, send } = globalThis.lx
 
-if (import.meta.env.ENABLE_DEV_TOOLS) {
-    on(EVENT_NAMES.request, (event_data) => {
-        console.log(event_data)
-    })
-}
 
 on(EVENT_NAMES.request, (event_data) => {
+    if (import.meta.env.ENABLE_DEV_TOOLS) {
+        console.log(event_data)
+    }
     return new Promise((resolve, reject) => {
         request(
             import.meta.env.SERVER_URL,

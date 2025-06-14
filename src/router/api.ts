@@ -1,9 +1,14 @@
-import { getId } from "@/service/music"
+// @ts-check
+
+import { getId } from "@/service/music.ts"
 import axios from "axios"
 import { eventHandler, readBody } from "h3"
-import * as music from "@/service/music"
+import * as music from "@/service/music.ts"
 // import request from "superagent"
 import got from 'got'
+import crypto from "crypto"
+import fs from "fs/promises"
+import nodePath  from "path"
 
 
 let count = 0
@@ -21,7 +26,7 @@ export default eventHandler(async (event) => {
     if (musicFile !== false) {
         return {
             state: "success",
-            url: "http://127.0.0.1:23111/file/music/"+musicFile.fileid
+            url: "http://192.168.31.226:23111/file/music/"+musicFile.fileid
         }
     }
     
@@ -55,27 +60,6 @@ export default eventHandler(async (event) => {
         .toString("hex")
     )
     try {
-        // const req = axios.request({
-        //     url: 'http://flower.tempmusics.tk/v1' + path,
-        //     method: "GET",
-        //     headers: headers,
-        // })
-        // const resp = await req
-        // if (0 !== resp.data.code) {
-        //     throw Error(resp.data.msg)
-        // }
-        // const url = resp.data.data
-        // console.log(url)
-        // const musicData = (await axios.request({ url, method: "GET" })).data
-        // console.log(musicData)
-        // // const musicFileName = crypto.createHash('sha256').update(musicData).digest('hex')
-        // // fs.writeFile(musicFileName, musicData)
-        // // music.set(source, getId(source, musicInfo), musicFileName)
-        // // console.log(musicFileName)
-        // return {
-        //     state: "success",
-        //     url
-        // }
         const req = got
             .get(
                 'http://flower.tempmusics.tk/v1' + path,
@@ -84,8 +68,6 @@ export default eventHandler(async (event) => {
                     decompress: false
                 }
             )
-            // .set()
-            // .unset("accept-encoding")
             
         const resp = await req
         const body = JSON.parse(resp.body)
@@ -95,12 +77,12 @@ export default eventHandler(async (event) => {
         }
         const url = body.data
         console.log(url)
-        const musicData = (await got.get(url)).body
+        const musicData = (await got.get(url)).rawBody
         console.log(musicData)
-        // const musicFileName = crypto.createHash('sha256').update(musicData).digest('hex')
-        // fs.writeFile(musicFileName, musicData)
-        // music.set(source, getId(source, musicInfo), musicFileName)
-        // console.log(musicFileName)
+        const musicFileName = crypto.createHash('sha256').update(musicData).digest('hex')
+        fs.writeFile(nodePath.join("file/music/", musicFileName), musicData)
+        music.set(source, getId(source, musicInfo), musicFileName)
+        console.log(musicFileName)
         return {
             state: "success",
             url
