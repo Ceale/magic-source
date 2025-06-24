@@ -8,24 +8,13 @@ import path from "path"
 import { tryCatch } from "@/util/tryCatch"
 import * as config from "@/config"
 
-type err = any
-type resp = {
-    "statusCode": 404,
-    "statusMessage": "Not Found",
-    "headers": {
-        "date": "Sat, 14 Jun 2025 12:36:10 GMT",
-        "transfer-encoding": "chunked"
-    },
-    "bytes": 35,
-    "raw": Uint8Array,
-    "body": any
-}
+// 限速，同一首歌，1小时内，请求失败不能超过2次，超出直接失败
 
 export default eventHandler(async (event) => {
     const body = await readBody(event)
     const { source, action, info: { musicInfo, type } } = body
     const songmid = getId(source, musicInfo)
-    console.log(action, source, getId(source, musicInfo))
+    console.log(action, source, songmid)
     switch (action) {
         case "musicUrl": {
             if (!music.source.includes(source)) throw createError({ statusCode: 400, statusMessage: "Invalid music source: " + source })
@@ -38,9 +27,21 @@ export default eventHandler(async (event) => {
                     url: config.server + "file/music/" + source + "$" + songmid
                 }
             }
+            switch (songmid) {
+                case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST1.mp3":
+                    return { url: config.server + "file/music/" + source + "$gimaiseikatsuOST01.flac" }
+                case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST2.wav":
+                    return { url: config.server + "file/music/" + source + "$gimaiseikatsuOST02.flac" }
+                case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST3.mp3":
+                    return { url: config.server + "file/music/" + source + "$gimaiseikatsuOST03.flac" }
+                case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST4.wav": 
+                    return { url: config.server + "file/music/" + source + "$gimaiseikatsuEP04.flac" }
+                case "D:\\Music\\Be What You Wanna Be.mp3":
+                    return { url: config.server + "file/music/" + source + "$BeWhatYouWannaBe.mp3" }
+            }
             if (source === "local") throw createError({ statusCode: 404, statusMessage: "Local music not found" })
             
-            const requrl = '/url/' + source + '/' + getId(source, musicInfo) + '/' + type
+            const requrl = '/url/' + source + '/' + songmid + '/' + type
             const headers = {
                 'User-Agent': 'lx-music/' + (Math.random() > -1 ? "desktop" : "mobile"),
                 'ver': "2.0.0",
@@ -78,7 +79,7 @@ export default eventHandler(async (event) => {
                 
                 {(async () => {
                     const musicData = (await got.get(url)).rawBody
-                    await fs.writeFile(path.join("file/music/", source, songmid), musicData)
+                    await fs.writeFile(path.join("file/music/", source, String(songmid)), musicData)
                 })()}
                 return {
                     state: "success",
@@ -93,7 +94,14 @@ export default eventHandler(async (event) => {
             }
         }
         case "pic": {
-
+            switch (songmid) {
+                case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST1.mp3":
+                case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST2.wav":
+                case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST3.mp3":
+                    return { url: config.server + "file/cover/gimaiseikatsuOST01.png" }
+                case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST4.wav": 
+                    return { url: config.server + "file/cover/gimaiseikatsuEP04.png" }
+            }
         }
         case "lyric": {
 

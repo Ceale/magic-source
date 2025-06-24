@@ -29,4 +29,4 @@ const app = createApp({
 })
 app.use(router)
 createServer(toNodeListener(app)).listen(config.port)
-log(`服务已启动于：${config.server}`);
+log(`服务已启动于：${config.server}`)

@@ -5,6 +5,21 @@ import Axios from "axios"
 import http from "node:http"
 import https from "node:https"
 
+// runInNewContext("console.log('114514')", {})
+
+type err = any
+type resp = {
+    "statusCode": 404,
+    "statusMessage": "Not Found", 
+    "headers": {
+        "date": "Sat, 14 Jun 2025 12:36:10 GMT",
+        "transfer-encoding": "chunked"
+    },
+    "bytes": 35,
+    "raw": Uint8Array,
+    "body": any
+}
+
 const readMetaInfo = (script: string): Record<string, string> => {
     const rawmeta = script.match(/\/\*\*([\s\S]*?)\*\//)
     if (rawmeta === null) {

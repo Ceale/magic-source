@@ -4,7 +4,7 @@ import { createError, eventHandler } from "h3"
 import path from "path"
 
 const musicIdRepExp = /^[a-zA-Z0-9$.]{0,32}$/
-const coverIdRepExp = /^[a-zA-Z0-9]{0,32}$/
+const coverIdRepExp = /^[a-zA-Z0-9.]{0,32}$/
 
 export default eventHandler(async (event) => {
     const requestType = event.context.params?.type

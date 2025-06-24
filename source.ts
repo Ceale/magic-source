@@ -1,0 +1,265 @@
+import EventEmitter from "node:events"
+import { runInNewContext } from "node:vm"
+import Axios from "axios"
+import needle from 'needle'
+import http from "node:http"
+import https from "node:https"
+import got from 'got'
+import { readFile } from "node:fs/promises"
+import crypto from "node:crypto"
+import zlib from "node:zlib"
+import { log } from "node:console"
+
+const util = {
+    crypto: {
+        aesEncrypt(buffer, mode, key, iv) {
+            const cipher = crypto.createCipheriv(mode, key, iv)
+            return Buffer.concat([cipher.update(buffer), cipher.final()])
+        },
+        rsaEncrypt(buffer, key) {
+            buffer = Buffer.concat([Buffer.alloc(128 - buffer.length), buffer])
+            return crypto.publicEncrypt({ key, padding: crypto.constants.RSA_NO_PADDING }, buffer)
+        },
+        randomBytes(size) {
+            return crypto.randomBytes(size)
+        },
+        md5(str) {
+            log(str)
+            return crypto.createHash('md5').update(str).digest('hex')
+        },
+    },
+    buffer: {
+        from(...args) {
+            // @ts-ignore
+            return Buffer.from(...args)
+        },
+        bufToString(buf, format) {
+            return Buffer.from(buf, 'binary').toString(format)
+        },
+    },
+    zlib: {
+        inflate(buf) {
+            return new Promise((resolve, reject) => {
+                zlib.inflate(buf, (err, data) => {
+                    if (err) reject(new Error(err.message))
+                    else resolve(data)
+                })
+            })
+        },
+        deflate(data) {
+            return new Promise((resolve, reject) => {
+                zlib.deflate(data, (err, buf) => {
+                    if (err) reject(new Error(err.message))
+                    else resolve(buf)
+                })
+            })
+        },
+    },
+}
+
+const readMetaInfo = (script: string): Record<string, string> => {
+    const rawmeta = script.match(/\/\*([\s\S]*?)\*\//)
+    if (rawmeta === null) {
+        throw new Error("音乐源没有元信息")
+    }
+    const meta = new Map<string, string>()
+    rawmeta[0]
+        .replace(/\/\*?/, '')   // 去除开头的 /**
+        .replace(/\*\/$/, '')     // 去除结尾的 */
+        .split('\n') // 按行分割
+        .map(line => line
+            .replace(/^\s*\* ?/, '')  // 去除行首的 * 号
+            .trim()
+        )
+        .filter(line => line.length > 0)
+        .forEach(line => {
+            const tagMatch = line.match(/@(\w+)\s+(.+)/)
+            if (tagMatch) {
+                const [_, key, value] = tagMatch
+                meta.set(key, value)
+            }
+        })
+    return Object.fromEntries(meta)
+}
+
+export const EVENT_NAMES = {
+    request: 'request',
+    inited: 'inited',
+    updateAlert: 'updateAlert',
+} as const
+
+export const loadSource = async (script: string) => {
+    const eventEmitter = new EventEmitter()
+    const meta = readMetaInfo(script)
+    let requestHandle = null
+    const env = {
+        version: "2.0.0",
+        env: "mobile",
+        currentScriptInfo: { ...meta, rawScript: script },
+        EVENT_NAMES,
+        utils: util,
+        // send: (event_name, datas) => eventEmitter.emit(event_name, datas),
+        send(event_name, datas) {
+            switch (event_name) {
+                case EVENT_NAMES.request:
+                    if (requestHandle === null) throw new Error("request 还未初始化")
+                    return requestHandle(datas)
+                case EVENT_NAMES.inited:
+                case EVENT_NAMES.updateAlert:
+                    eventEmitter.emit(event_name, datas)
+            }
+        },
+        // on: (event_name, handler) => eventEmitter.on(event_name, handler),
+        on(event_name, handler) {
+            switch (event_name) {
+                case EVENT_NAMES.request:
+                    requestHandle = handler
+                    return
+                case EVENT_NAMES.inited:
+                case EVENT_NAMES.updateAlert:
+                    eventEmitter.on(event_name, handler)
+            }
+        },
+        request(url, { method, headers, body, form, formData, timeout }, callback) {
+            
+            console.log("request", url, JSON.parse(JSON.stringify({ method, headers, body, form, formData, timeout })))
+            const reqbody = (() => {
+                if (body) {
+                    try {
+                        return JSON.stringify(body)
+                    } catch (e) {
+                        return body
+                    }
+                }
+                return form ?? formData
+            })()
+            const signal = new AbortController()
+            got(url, {
+                method: method ?? "get",
+                headers,
+                decompress: false,
+                body: reqbody,
+                // timeout,
+                signal: signal.signal,
+                throwHttpErrors: false
+            }).then(response => {
+                const body = (() => {
+                    try {
+                        return JSON.parse(response.body)
+                    } catch (e) {
+                        return response.body
+                    }
+                })()
+                const resp = {
+                    statusCode: response.statusCode,
+                    statusMessage: response.statusMessage,
+                    headers: response.headers,
+                    bytes: response.rawBody.length,
+                    raw: response.rawBody,
+                    // body: JSON.parse(response.body),
+                    body
+                }
+                console.log(resp)
+                callback(null, resp, response.body)
+            }).catch(err => {
+                console.log(JSON.parse(JSON.stringify(err)))
+                callback(err, null, null)
+            })
+        //     Axios.request({
+        //         httpAgent: new http.Agent({ keepAlive: false }),
+        //         httpsAgent: new https.Agent({ keepAlive: false }),
+        //         url,
+        //         method: method ?? "get",
+        //         headers: {
+        //             ...headers,
+        //             "accept": "*/*",
+        //             "accept-encoding": null,
+        //             "Connection": "close" 
+        //         },
+        //         data: body ?? form ?? formData,
+        //         signal: signal.signal,
+        //         timeout: timeout,
+        //     }).then(response => {
+        //         const resp = {
+        //             statusCode: response.status,
+        //             statusMessage: response.statusText,
+        //             headers: response.headers,
+        //             bytes: 0,
+        //             raw: new Uint8Array(0),
+        //             body: response.data,
+        //         }
+        //         console.log(resp)
+        //         callback(null, resp, response.data)
+        //     }).catch(error => {
+        //         console.log(error)
+        //         callback(error, null, null)
+        //     })
+            return signal.abort
+        }
+    }
+
+    return {
+        send: env.send,
+        on: env.on,
+        init() {
+            runInNewContext(script, { lx: env, console })
+        },
+    }
+}
+
+
+const a = {
+    "source": "kw",
+    "action": "musicUrl",
+    "info": {
+        "type": "128k",
+        "musicInfo": {
+            "name": "Red Battle",
+            "singer": "高橋李依、豊崎愛生",
+            "source": "kw",
+            "songmid": "28205047",
+            "interval": "03:46",
+            "albumName": "TVアニメ『この素晴らしい世界に祝福を! 2』キャラクターソングアルバム「十八番尽くしの歌宴に祝杯を! 」",
+            "img": "",
+            "typeUrl": {},
+            "albumId": "9675228",
+            "types": [
+                {
+                    "type": "128k",
+                    "size": "3.46Mb"
+                },
+                {
+                    "type": "320k",
+                    "size": "8.65Mb"
+                },
+                {
+                    "type": "flac",
+                    "size": "27.39Mb"
+                }
+            ],
+            "_types": {
+                "flac": {
+                    "size": "27.39MB"
+                },
+                "320k": {
+                    "size": "8.65MB"
+                },
+                "128k": {
+                    "size": "3.46MB"
+                }
+            }
+        }
+    }
+}
+
+// const source = await loadSource(await readFile("野花音源.js", "utf8"))
+const source = await loadSource(await readFile("野花音源 copy.js", "utf8"))
+// const source = await loadSource(await readFile("source.js", "utf8"))
+// const source = await loadSource(await readFile("lx-music-source V3.0.js", "utf8"))
+source.on(EVENT_NAMES.inited, async () => {
+    console.log("inited")
+    void (source.send(EVENT_NAMES.request, a) as Promise<string>)
+    .then(console.log)
+    .catch(err => console.error(err.message))
+})
+source.init()

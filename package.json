@@ -5,14 +5,22 @@
   "description": "通过代理其他lx-music-api等，来更好的缓存歌曲，并按照lx-music-api标准提供服务",
   "main": "index.js",
   "scripts": {
-    "dev": "bun --watch src/main.ts"
+    "dev": "bun --watch src/main.ts",
+    "build": "bun build --outfile=dist/app.js --format=esm --target=node src/main.ts"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/axios": "^0.14.4",
     "@types/bun": "^1.2.15",
+    "@types/needle": "^3.3.0",
     "@types/node": "^22.10.2",
+    "axios": "^1.10.0",
     "got": "^14.4.7",
-    "h3": "^1.15.3"
+    "h3": "^1.15.3",
+    "needle": "^3.3.1"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
   }
 }
