@@ -127,7 +127,7 @@ export const loadSource = async (script: string) => {
                 signal: signal.signal,
                 timeout: timeout,
                 validateStatus: () => true,
-                responseType: "arraybuffer"
+                responseType: "arraybuffer",
             }).then(response => {
                 const rawBody = new TextDecoder().decode(response.data)
                 const body = (() => { 
@@ -159,7 +159,8 @@ export const loadSource = async (script: string) => {
         send: env.send,
         on: env.on,
         init() {
-            runInNewContext(script, { lx: env, console })
+            runInNewContext(script, { lx: env, setTimeout /* console */ })
         },
+        meta,
     }
 }

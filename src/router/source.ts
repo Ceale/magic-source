@@ -7,6 +7,7 @@ import fs from "fs/promises"
 import path from "path"
 import { tryCatch } from "@/util/tryCatch"
 import * as config from "@/config"
+import { sourceList } from "@/service/manager"
 
 // 限速，同一首歌，1小时内，请求失败不能超过2次，超出直接失败
 
@@ -40,58 +41,22 @@ export default eventHandler(async (event) => {
                     return { url: config.server + "file/music/" + source + "$BeWhatYouWannaBe.mp3" }
             }
             if (source === "local") throw createError({ statusCode: 404, statusMessage: "Local music not found" })
-            
-            const requrl = '/url/' + source + '/' + songmid + '/' + type
-            const headers = {
-                'User-Agent': 'lx-music/' + (Math.random() > -1 ? "desktop" : "mobile"),
-                'ver': "2.0.0",
-                'source-ver': "1.0.0",
-                "accept-encoding": undefined,
-                "accept": "*/*",
-                "tag": Buffer.from(
-                    Buffer.from(
-                        JSON.stringify(
-                            requrl.match(/(?:\d\w)+/g),
-                            null,
-                            1
-                        )
-                    ) as any,
-                    "binary"
-                ).toString("hex")
-            }
-            try {
-                console.log("Fetch: ", source, songmid)
-                const req = addGettingQueue(() => got
-                    .get(
-                        'http://flower.tempmusics.tk/v1' + requrl,
-                        {
-                            headers,
-                            decompress: false
-                        }
-                    ))
-                const resp = await req
-                const body = JSON.parse(resp.body)
-                if (0 !== body.code) {
-                    throw Error(body.msg)
-                }
-                const url = body.data
-                console.log("Fetch done.", url)
-                
-                {(async () => {
-                    const musicData = (await got.get(url)).rawBody
-                    await fs.writeFile(path.join("file/music/", source, String(songmid)), musicData)
-                })()}
-                return {
-                    state: "success",
-                    url
-                }
-            } catch (e) {
-                console.log("Fetch failed")
-                return {
-                    state: "error",
-                    errmsg: e.message
+            console.log("Fetch", source, songmid)
+            for (const source of sourceList) {
+                console.log("Fetch on", source.name)
+                try {
+                    const url = await source.request(body)
+                    console.log("Fetch", source.name, "success", url)
+                    return { 
+                        state: "success",
+                        url
+                    }
+                } catch (e) {
+                    console.log("Fetch", source.name, "failed")
+                    console.log(e)
                 }
             }
+            return { state: "error", errmsg: "No source available" }
         }
         case "pic": {
             switch (songmid) {

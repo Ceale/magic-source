@@ -3,6 +3,7 @@ import { log } from "node:console"
 import { createServer } from "node:http"
 import { router } from "@/router"
 import * as config from "@/config"
+import { loadAllSource, sourceList } from "@/service/manager"
 
 const app = createApp({
     async onError(error, event) {
@@ -27,6 +28,8 @@ const app = createApp({
         await sendWebResponse(event, new Response(message, { status: error.statusCode, statusText }))
     }
 })
+
+await loadAllSource()
 app.use(router)
 createServer(toNodeListener(app)).listen(config.port)
 log(`服务已启动于：${config.server}`)
