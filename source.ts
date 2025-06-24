@@ -94,11 +94,10 @@ export const loadSource = async (script: string) => {
     let requestHandle = null
     const env = {
         version: "2.0.0",
-        env: "mobile",
+        env: "desktop",
         currentScriptInfo: { ...meta, rawScript: script },
         EVENT_NAMES,
         utils: util,
-        // send: (event_name, datas) => eventEmitter.emit(event_name, datas),
         send(event_name, datas) {
             switch (event_name) {
                 case EVENT_NAMES.request:
@@ -109,7 +108,6 @@ export const loadSource = async (script: string) => {
                     eventEmitter.emit(event_name, datas)
             }
         },
-        // on: (event_name, handler) => eventEmitter.on(event_name, handler),
         on(event_name, handler) {
             switch (event_name) {
                 case EVENT_NAMES.request:
@@ -121,79 +119,45 @@ export const loadSource = async (script: string) => {
             }
         },
         request(url, { method, headers, body, form, formData, timeout }, callback) {
-            
             console.log("request", url, JSON.parse(JSON.stringify({ method, headers, body, form, formData, timeout })))
-            const reqbody = (() => {
-                if (body) {
-                    try {
-                        return JSON.stringify(body)
-                    } catch (e) {
-                        return body
-                    }
-                }
-                return form ?? formData
-            })()
             const signal = new AbortController()
-            got(url, {
+            Axios.request({
+                url,
                 method: method ?? "get",
-                headers,
-                decompress: false,
-                body: reqbody,
-                // timeout,
+                headers: {
+                    ...headers,
+                    "accept": "*/*",
+                    "accept-encoding": null,
+                    "Connection": "close" 
+                },
+                data: body ?? form ?? formData,
                 signal: signal.signal,
-                throwHttpErrors: false
+                timeout: timeout,
+                validateStatus: () => true,
+                responseType: "arraybuffer"
             }).then(response => {
-                const body = (() => {
+                const rawBody = new TextDecoder().decode(response.data)
+                const body = (() => { 
                     try {
-                        return JSON.parse(response.body)
+                        return JSON.parse(rawBody)
                     } catch (e) {
-                        return response.body
+                        return rawBody
                     }
                 })()
                 const resp = {
-                    statusCode: response.statusCode,
-                    statusMessage: response.statusMessage,
+                    statusCode: response.status,
+                    statusMessage: response.statusText,
                     headers: response.headers,
-                    bytes: response.rawBody.length,
-                    raw: response.rawBody,
-                    // body: JSON.parse(response.body),
-                    body
+                    bytes: response.data.byteLength,
+                    raw: response.data,
+                    body,
                 }
                 console.log(resp)
-                callback(null, resp, response.body)
-            }).catch(err => {
-                console.log(JSON.parse(JSON.stringify(err)))
-                callback(err, null, null)
+                callback(null, resp, body)
+            }).catch(error => {
+                console.log(error)
+                callback(error, null, null)
             })
-        //     Axios.request({
-        //         httpAgent: new http.Agent({ keepAlive: false }),
-        //         httpsAgent: new https.Agent({ keepAlive: false }),
-        //         url,
-        //         method: method ?? "get",
-        //         headers: {
-        //             ...headers,
-        //             "accept": "*/*",
-        //             "accept-encoding": null,
-        //             "Connection": "close" 
-        //         },
-        //         data: body ?? form ?? formData,
-        //         signal: signal.signal,
-        //         timeout: timeout,
-        //     }).then(response => {
-        //         const resp = {
-        //             statusCode: response.status,
-        //             statusMessage: response.statusText,
-        //             headers: response.headers,
-        //             bytes: 0,
-        //             raw: new Uint8Array(0),
-        //             body: response.data,
-        //         }
-        //         console.log(resp)
-        //         callback(null, resp, response.data)
-        //     }).catch(error => {
-        //         console.log(error)
-        //         callback(error, null, null)
-        //     })
             return signal.abort
         }
     }
@@ -209,57 +173,29 @@ export const loadSource = async (script: string) => {
 
 
 const a = {
-    "source": "kw",
+    "source": "tx",
     "action": "musicUrl",
     "info": {
         "type": "128k",
         "musicInfo": {
-            "name": "Red Battle",
-            "singer": "高橋李依、豊崎愛生",
-            "source": "kw",
-            "songmid": "28205047",
-            "interval": "03:46",
-            "albumName": "TVアニメ『この素晴らしい世界に祝福を! 2』キャラクターソングアルバム「十八番尽くしの歌宴に祝杯を! 」",
-            "img": "",
-            "typeUrl": {},
-            "albumId": "9675228",
-            "types": [
-                {
-                    "type": "128k",
-                    "size": "3.46Mb"
-                },
-                {
-                    "type": "320k",
-                    "size": "8.65Mb"
-                },
-                {
-                    "type": "flac",
-                    "size": "27.39Mb"
-                }
-            ],
-            "_types": {
-                "flac": {
-                    "size": "27.39MB"
-                },
-                "320k": {
-                    "size": "8.65MB"
-                },
-                "128k": {
-                    "size": "3.46MB"
-                }
-            }
+            "songmid": "001GGr9K4Qu5Bm"
         }
     }
 }
 
-// const source = await loadSource(await readFile("野花音源.js", "utf8"))
-const source = await loadSource(await readFile("野花音源 copy.js", "utf8"))
+const source = await loadSource(await readFile("野花音源.js", "utf8"))
+// const source = await loadSource(await readFile("野花音源 copy.js", "utf8"))
 // const source = await loadSource(await readFile("source.js", "utf8"))
 // const source = await loadSource(await readFile("lx-music-source V3.0.js", "utf8"))
 source.on(EVENT_NAMES.inited, async () => {
     console.log("inited")
-    void (source.send(EVENT_NAMES.request, a) as Promise<string>)
-    .then(console.log)
-    .catch(err => console.error(err.message))
+    setTimeout(() => {
+        console.log("5...")
+    }, 5000)
+    setTimeout(() => {
+        void (source.send(EVENT_NAMES.request, a) as Promise<string>)
+        .then(console.log)
+        .catch(err => console.error(err.message))
+    }, 10000)
 })
 source.init()
