@@ -1,14 +1,8 @@
+import Axios from "axios"
+import crypto from "node:crypto"
 import EventEmitter from "node:events"
 import { runInNewContext } from "node:vm"
-import Axios from "axios"
-import needle from 'needle'
-import http from "node:http"
-import https from "node:https"
-import got from 'got'
-import { readFile } from "node:fs/promises"
-import crypto from "node:crypto"
 import zlib from "node:zlib"
-import { log } from "node:console"
 
 const util = {
     crypto: {
@@ -24,7 +18,6 @@ const util = {
             return crypto.randomBytes(size)
         },
         md5(str) {
-            log(str)
             return crypto.createHash('md5').update(str).digest('hex')
         },
     },
@@ -119,7 +112,7 @@ export const loadSource = async (script: string) => {
             }
         },
         request(url, { method, headers, body, form, formData, timeout }, callback) {
-            console.log("request", url, JSON.parse(JSON.stringify({ method, headers, body, form, formData, timeout })))
+            // console.log("request", url, JSON.parse(JSON.stringify({ method, headers, body, form, formData, timeout })))
             const signal = new AbortController()
             Axios.request({
                 url,
@@ -152,10 +145,10 @@ export const loadSource = async (script: string) => {
                     raw: response.data,
                     body,
                 }
-                console.log(resp)
+                // console.log(resp)
                 callback(null, resp, body)
             }).catch(error => {
-                console.log(error)
+                // console.log(error)
                 callback(error, null, null)
             })
             return signal.abort
@@ -170,32 +163,3 @@ export const loadSource = async (script: string) => {
         },
     }
 }
-
-
-const a = {
-    "source": "tx",
-    "action": "musicUrl",
-    "info": {
-        "type": "128k",
-        "musicInfo": {
-            "songmid": "001GGr9K4Qu5Bm"
-        }
-    }
-}
-
-const source = await loadSource(await readFile("野花音源.js", "utf8"))
-// const source = await loadSource(await readFile("野花音源 copy.js", "utf8"))
-// const source = await loadSource(await readFile("source.js", "utf8"))
-// const source = await loadSource(await readFile("lx-music-source V3.0.js", "utf8"))
-source.on(EVENT_NAMES.inited, async () => {
-    console.log("inited")
-    setTimeout(() => {
-        console.log("5...")
-    }, 5000)
-    setTimeout(() => {
-        void (source.send(EVENT_NAMES.request, a) as Promise<string>)
-        .then(console.log)
-        .catch(err => console.error(err.message))
-    }, 10000)
-})
-source.init()

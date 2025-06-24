@@ -1,3 +1,7 @@
-node_modules/
-dist/
+/node_modules/
+/dist/
+/.bkup.code/
+/.bkup.source/
+/.test.data/
 /file/
+/source/
