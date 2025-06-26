@@ -3,9 +3,10 @@ import { log } from "node:console"
 import { createServer } from "node:http"
 import { router } from "@/router"
 import { loadConfig, config } from "@/config"
-import { loadAllSource, sourceList } from "@/service/manager"
+import { loadAllSource, sourceList } from "@/service/source/manager"
 import { mkdir } from "node:fs/promises"
 import { UrlUtil } from "@ceale/util"
+import { logger } from "@/service/logger"
 
 await Promise.all([
     "file/cover/",
@@ -45,7 +46,8 @@ const app = createApp({
 })
 
 await loadAllSource()
+console.log(sourceList)
 app.use(router)
 createServer(toNodeListener(app)).listen(config.server.port)
-log(`服务已启动于：http://${config.server.host}:${config.server.port}/`)
-log(`音乐源地址：${UrlUtil.join(`http://${config.server.host}:${config.server.port}/`, "/api-source")}`)
+logger.info(`服务已启动于：http://${config.server.host}:${config.server.port}/`)
+logger.info(`音乐源地址：${UrlUtil.join(`http://${config.server.host}:${config.server.port}/`, "/api-source")}`)

@@ -1,4 +1,5 @@
 export const source = [ "tx", "wy", "kg", "kw", "mg", "local" ] as const
+export const quality = ['128k', '320k', 'flac', 'flac24bit'] as const
 
 export const getId = (source, musicInfo) => {
     switch (source) {

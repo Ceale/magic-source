@@ -6,8 +6,9 @@ import crypto from "crypto"
 import fs from "fs/promises"
 import path from "path"
 import { tryCatch } from "@/util/tryCatch"
-import * as config from "@/config"
-import { sourceList } from "@/service/manager"
+import { config } from "@/config"
+import { sourceList } from "@/service/source/manager"
+import { logger } from "@/service/logger"
 
 // 限速，同一首歌，1小时内，请求失败不能超过2次，超出直接失败
 
@@ -15,7 +16,7 @@ export default eventHandler(async (event) => {
     const body = await readBody(event)
     const { source, action, info: { musicInfo, type } } = body
     const songmid = getId(source, musicInfo)
-    console.log(action, source, songmid)
+    logger.info("Request", action, source, songmid)
     switch (action) {
         case "musicUrl": {
             if (!music.source.includes(source)) throw createError({ statusCode: 400, statusMessage: "Invalid music source: " + source })
@@ -41,19 +42,19 @@ export default eventHandler(async (event) => {
                     return { url: config.server + "file/music/" + source + "$BeWhatYouWannaBe.mp3" }
             }
             if (source === "local") throw createError({ statusCode: 404, statusMessage: "Local music not found" })
-            console.log("Fetch", source, songmid)
+            logger.info("Fetch", source, songmid)
             for (const source of sourceList) {
-                console.log("Fetch on", source.name)
+                logger.info("Fetch on", source.name)
                 try {
                     const url = await source.request(body)
-                    console.log("Fetch", source.name, "success", url)
+                    logger.info("Fetch", source.name, "success", url)
                     return { 
                         state: "success",
                         url
                     }
                 } catch (e) {
-                    console.log("Fetch", source.name, "failed")
-                    console.log(e)
+                    logger.info("Fetch", source.name, "failed")
+                    logger.info(e)
                 }
             }
             return { state: "error", errmsg: "No source available" }

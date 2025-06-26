@@ -1,42 +1,50 @@
 import { glob } from "fs/promises"
 import { EVENT_NAMES, loadSource } from "./loader"
 import { readFile } from "fs/promises"
+import { logger } from "@/service/logger"
+import { quality, source } from "@/util/music"
 
 export const sourceList = [] as {
     readonly name: string;
     readonly meta: Record<string, string>;
+    readonly quality: Record<typeof source[number], typeof quality[number][]>
     readonly request: (datas: any) => Promise<string>;
 }[]
 
 export const loadAllSource = async () => {
     for await (const path of glob("source/*.js", {})) {
-        console.log(`正在从 ${path} 加载音乐源...`)
         try {
             const source = await loadSource(await readFile(path, "utf8"))
-            console.log(`已加载音乐源：${source.meta.name}`)
+            logger.info(`音乐源 [${source.meta.name}]\`${path}\` 加载成功`)
             await new Promise((resolve) => {
-                source.on(EVENT_NAMES.inited, () => {
-                    console.log(`已初始化音乐源：${source.meta.name}`)
+                source.on(EVENT_NAMES.inited, ({ sources }) => {
+                    logger.info(`[${source.meta.name}] 已初始化`)
                     source.on(EVENT_NAMES.updateAlert, ({log, updateUrl}) => {
-                        console.log(`音乐源：${source.meta.name} 有新的更新，\n${log}\n${updateUrl}`)
+                        logger.info(`\n音乐源 [${source.meta.name}] 有新的更新，\n${log}\n${updateUrl}\n`)
                     })
                     sourceList.push({
                         name: source.meta.name,
                         meta: source.meta,
+                        quality: Object.fromEntries(Object.entries(sources).map(([key, value]) => [key, (value as any).qualitys])) as any,
                         request(datas) {
                             return source.send(EVENT_NAMES.request, datas)
                         },
                     })
                     resolve(true)
                 })
-                source.init()
+                try {
+                    source.init()
+                } catch (e) {
+                    logger.warn(`[${source.meta.name}] 初始化失败`)
+                    logger.error(e)
+                }
             })
         } catch (e) {
-            console.error(`加载音乐源 ${path} 失败: ${e}`)
+            logger.warn(`\`${path}\` 加载失败`)
         }
 
     }
-    console.log(`已加载 ${sourceList.length} 个音乐源`)
+    logger.info(`已加载 ${sourceList.length} 个音乐源`)
 }
 
 // await loadAllSource()
