@@ -46,7 +46,7 @@ const app = createApp({
 })
 
 await loadAllSource()
-console.log(sourceList)
+// console.log(sourceList)
 app.use(router)
 createServer(toNodeListener(app)).listen(config.server.port)
 logger.info(`服务已启动于：http://${config.server.host}:${config.server.port}/`)

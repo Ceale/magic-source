@@ -9,45 +9,60 @@ import { tryCatch } from "@/util/tryCatch"
 import { config } from "@/config"
 import { sourceList } from "@/service/source/manager"
 import { logger } from "@/service/logger"
+import { UrlUtil } from "@ceale/util"
 
 // 限速，同一首歌，1小时内，请求失败不能超过2次，超出直接失败
 
 export default eventHandler(async (event) => {
     const body = await readBody(event)
-    const { source, action, info: { musicInfo, type } } = body
-    const songmid = getId(source, musicInfo)
-    logger.info("Request", action, source, songmid)
+    const { source: musicSource, action, info: { musicInfo, type } } = body
+    const songmid = getId(musicSource, musicInfo)
+    logger.info("Request", action, musicSource, songmid)
     switch (action) {
         case "musicUrl": {
-            if (!music.source.includes(source)) throw createError({ statusCode: 400, statusMessage: "Invalid music source: " + source })
+            if (!music.source.includes(musicSource)) throw createError({ statusCode: 400, statusMessage: "Invalid music source: " + musicSource })
             if (
                 (await tryCatch(
-                    fs.access(path.join("file/music/", source, String(songmid)))
+                    fs.access(path.join("file/music/", musicSource, String(songmid)))
                 )).error === null
             ) {
+                const url = UrlUtil.join(`http://${config.server.host}:${config.server.port}/`, "file/music", musicSource + "$" + songmid)
+                logger.info("Matched", url)
                 return {
-                    url: config.server + "file/music/" + source + "$" + songmid
+                    state: "success",
+                    url
                 }
             }
             switch (songmid) {
                 case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST1.mp3":
-                    return { url: config.server + "file/music/" + source + "$gimaiseikatsuOST01.flac" }
+                    return { url: config.server + "file/music/" + musicSource + "$gimaiseikatsuOST01.flac" }
                 case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST2.wav":
-                    return { url: config.server + "file/music/" + source + "$gimaiseikatsuOST02.flac" }
+                    return { url: config.server + "file/music/" + musicSource + "$gimaiseikatsuOST02.flac" }
                 case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST3.mp3":
-                    return { url: config.server + "file/music/" + source + "$gimaiseikatsuOST03.flac" }
+                    return { url: config.server + "file/music/" + musicSource + "$gimaiseikatsuOST03.flac" }
                 case "/storage/emulated/0/ 我的文件/義妹生活 OST/义妹生活OST4.wav": 
-                    return { url: config.server + "file/music/" + source + "$gimaiseikatsuEP04.flac" }
+                    return { url: config.server + "file/music/" + musicSource + "$gimaiseikatsuEP04.flac" }
                 case "D:\\Music\\Be What You Wanna Be.mp3":
-                    return { url: config.server + "file/music/" + source + "$BeWhatYouWannaBe.mp3" }
+                    return { url: config.server + "file/music/" + musicSource + "$BeWhatYouWannaBe.mp3" }
             }
-            if (source === "local") throw createError({ statusCode: 404, statusMessage: "Local music not found" })
-            logger.info("Fetch", source, songmid)
+            if (musicSource === "local") throw createError({ statusCode: 404, statusMessage: "Local music not found" })
+            logger.info("Fetch", musicSource, songmid)
             for (const source of sourceList) {
                 logger.info("Fetch on", source.name)
                 try {
                     const url = await source.request(body)
+                    if (!url.startsWith("http")) throw Error("Invalid url")
                     logger.info("Fetch", source.name, "success", url)
+                    {(async ()=>{
+                        try { 
+                            const musicData = (await got.get(url)).rawBody
+                            await fs.writeFile(path.join("file/music/", musicSource, String(songmid)), musicData)
+                            logger.info("Cached",  musicSource, songmid)
+                        } catch (error) {
+                            logger.warn("Cached",  musicSource, songmid)
+                            logger.error(error)
+                        }
+                    })()}
                     return { 
                         state: "success",
                         url
