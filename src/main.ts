@@ -2,8 +2,23 @@ import { createApp, sendWebResponse, toNodeListener } from "h3"
 import { log } from "node:console"
 import { createServer } from "node:http"
 import { router } from "@/router"
-import * as config from "@/config"
+import { loadConfig, config } from "@/config"
 import { loadAllSource, sourceList } from "@/service/manager"
+import { mkdir } from "node:fs/promises"
+import { UrlUtil } from "@ceale/util"
+
+await Promise.all([
+    "file/cover/",
+    "file/music/kg/",
+    "file/music/kw/",
+    "file/music/tx/",
+    "file/music/wy/",
+    "file/music/mg/",
+    "file/music/local/",
+    "source/"
+].map(path => mkdir(path, { recursive: true })))
+
+await loadConfig()
 
 const app = createApp({
     async onError(error, event) {
@@ -31,6 +46,6 @@ const app = createApp({
 
 await loadAllSource()
 app.use(router)
-createServer(toNodeListener(app)).listen(config.port)
-log(`服务已启动于：${config.server}`)
-log(`音乐源地址：${config.server}api-source`)
+createServer(toNodeListener(app)).listen(config.server.port)
+log(`服务已启动于：http://${config.server.host}:${config.server.port}/`)
+log(`音乐源地址：${UrlUtil.join(`http://${config.server.host}:${config.server.port}/`, "/api-source")}`)
